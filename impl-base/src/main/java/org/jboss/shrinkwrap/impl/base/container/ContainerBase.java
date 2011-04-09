@@ -17,7 +17,6 @@
 package org.jboss.shrinkwrap.impl.base.container;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
 import java.security.AccessController;
