@@ -970,7 +970,7 @@ public abstract class ContainerBase<T extends Archive<T>> extends AssignableBase
    {
       Validate.notNull(clazz, "Clazz must be specified");
      
-      return addClasses(clazz);
+      return addClasses(clazz.getClassLoader(), clazz);
    }
    
    /* (non-Javadoc)
@@ -1012,7 +1012,7 @@ public abstract class ContainerBase<T extends Archive<T>> extends AssignableBase
       }
 
       // Delegate and return
-      return this.addClass(clazz);
+      return this.addClasses(cl, clazz);
    }
 
    /* (non-Javadoc)
@@ -1022,6 +1022,11 @@ public abstract class ContainerBase<T extends Archive<T>> extends AssignableBase
    {
       Validate.notNull(classes, "Classes must be specified");
       
+      return addClasses(SecurityActions.getThreadContextClassLoader(),  classes);
+   }
+
+   private T addClasses(ClassLoader classLoader, Class<?>... classes)
+   {
       for(final Class<?> clazz : classes) 
       {
          Asset resource = new ClassAsset(clazz);
@@ -1048,6 +1053,7 @@ public abstract class ContainerBase<T extends Archive<T>> extends AssignableBase
                      return path.get().matches(expression);
                   };
                },
+               classLoader,
                clazz.getPackage()
          );
       }
@@ -1085,12 +1091,20 @@ public abstract class ContainerBase<T extends Archive<T>> extends AssignableBase
       Validate.notNull(filter, "Filter must be specified");
       Validate.notNull(packages, "Packages must be specified");
       
+      return addPackages(recursive, filter, SecurityActions.getThreadContextClassLoader(), packages);
+   }
+   
+   private T addPackages(final boolean recursive, final Filter<ArchivePath> filter, final ClassLoader classLoader, final Package... packages) throws IllegalArgumentException
+   {
+      Validate.notNull(filter, "Filter must be specified");
+      Validate.notNull(packages, "Packages must be specified");
+      
       String[] packageNames = new String[packages.length];
       for(int i = 0; i < packages.length; i++)
       {
          packageNames[i] = packages[i] == null ? null:packages[i].getName(); 
       }
-      return addPackages(recursive, filter, packageNames);
+      return addPackages(recursive, filter, classLoader, packageNames);
    }
 
    /* (non-Javadoc)
@@ -1126,6 +1140,12 @@ public abstract class ContainerBase<T extends Archive<T>> extends AssignableBase
 
       final ClassLoader classLoader = SecurityActions.getThreadContextClassLoader();
       
+      return addPackages(recursive, filter, classLoader, packageNames);
+   }
+
+   private T addPackages(boolean recursive, final Filter<ArchivePath> filter, final ClassLoader classLoader,
+         String... packageNames)
+   {
       for(String packageName : packageNames) 
       {
          final URLPackageScanner.Callback callback = new URLPackageScanner.Callback()
