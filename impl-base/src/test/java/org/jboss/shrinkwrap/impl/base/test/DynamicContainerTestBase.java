@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -34,6 +35,7 @@ import org.jboss.shrinkwrap.api.container.ClassContainer;
 import org.jboss.shrinkwrap.api.container.LibraryContainer;
 import org.jboss.shrinkwrap.api.container.ManifestContainer;
 import org.jboss.shrinkwrap.api.container.ResourceContainer;
+import org.jboss.shrinkwrap.impl.base.TestIOUtil;
 import org.jboss.shrinkwrap.impl.base.asset.AssetUtil;
 import org.jboss.shrinkwrap.impl.base.asset.ClassLoaderAsset;
 import org.jboss.shrinkwrap.impl.base.path.BasicPath;
@@ -815,7 +817,51 @@ public abstract class DynamicContainerTestBase<T extends Archive<T>> extends Arc
       ArchivePath expectedPath = new BasicPath(getClassPath(), AssetUtil.getFullPathForClassResource(classToAdd));
       assertContainsClass(expectedPath);
    }
+   
+   /**
+    * Ensure classes can be added to containers by name using a classloader
+    * 
+    * @throws Exception
+    */
+   @Test
+   @ArchiveType(ClassContainer.class)
+   public void testAddClassByFqnAndClassLoader() throws Exception
+   {
+      ClassLoader emptyClassLoader = new ClassLoader(null){};
+      ClassLoader originalClassLoader = SecurityActions.getThreadContextClassLoader();
+      File jarWithClass = TestIOUtil.createFileFromResourceName("cl-test.jar");
+      ClassLoader classCl = new URLClassLoader(new URL[]{jarWithClass.toURI().toURL()}, null);
 
+      try {
+         Thread.currentThread().setContextClassLoader(emptyClassLoader);
+         getClassContainer().addClass("test.classloader.DummyClass", classCl);
+      } finally {
+         Thread.currentThread().setContextClassLoader(originalClassLoader);
+      }
+      ArchivePath expectedClassPath = new BasicPath(getClassPath(), AssetUtil.getFullPathForClassResource("/test/classloader/DummyClass"));
+      assertContainsClass(expectedClassPath);
+   }
+
+   @Test
+   @ArchiveType(ClassContainer.class)
+   public void testAddClassInClassloader() throws Exception
+   {
+      ClassLoader emptyClassLoader = new ClassLoader(null){};
+      ClassLoader originalClassLoader = SecurityActions.getThreadContextClassLoader();
+      File jarWithClass = TestIOUtil.createFileFromResourceName("cl-test.jar");
+      ClassLoader classCl = new URLClassLoader(new URL[]{jarWithClass.toURI().toURL()}, null);
+
+      try {
+         Thread.currentThread().setContextClassLoader(emptyClassLoader);
+         Class<?> dummyClass = classCl.loadClass("test.classloader.DummyClass");
+         getClassContainer().addClasses(dummyClass);
+      } finally {
+         Thread.currentThread().setContextClassLoader(originalClassLoader);
+      }
+      ArchivePath expectedClassPath = new BasicPath(getClassPath(), AssetUtil.getFullPathForClassResource("/test/classloader/DummyClass"));
+      assertContainsClass(expectedClassPath);
+   }
+   
    /**
     * Ensure a package can be added to a container
     * 
