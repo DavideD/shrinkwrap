@@ -287,6 +287,17 @@ public interface Archive<T extends Archive<T>> extends Assignable
    boolean contains(String path) throws IllegalArgumentException;
 
    /**
+    * Removes the {@link Node} in the {@link Archive} at the specified path.
+    * If the path is a directory, recursively removes all contents. If the path does
+    * not exist, return null.
+    *
+    * @param path
+    * @return The Node removed
+    * @see Archive#delete(ArchivePath)
+    */
+   Node delete(String path) throws IllegalArgumentException;
+
+   /**
     * Removes the {@link Node} in the {@link Archive} at the specified {@link ArchivePath}.  
     * If the path is a directory, recursively removes all contents.  If the path does
     * not exist, return null.

@@ -234,6 +234,17 @@ public abstract class MemoryMapArchiveBase<T extends Archive<T>> extends Archive
       return this.contains(archivePath);
    }
 
+   /**
+    * {@inheritDoc}
+    * @see org.jboss.shrinkwrap.api.Archive#delete(java.lang.String)
+    */
+   @Override
+   public Node delete(String path) throws IllegalArgumentException
+   {
+      Validate.notNull(path, "No path was specified");
+      return this.delete(ArchivePaths.create(path));
+   }
+
    /** 
     * {@inheritDoc}
     * @see org.jboss.shrinkwrap.api.Archive#delete(org.jboss.declarchive.api.ArchivePath)
